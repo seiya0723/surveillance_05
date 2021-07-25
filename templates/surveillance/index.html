@@ -1,0 +1,51 @@
+{% load static %} 
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>サイト監視君</title>
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/49fbd67ac4.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="header">サイト監視君  <i class="far fa-eye"></i></div>
+
+    <a href="{% url 'account_logout' %}">ログアウトする</a>
+
+    <p>こんにちは {{ request.user.username }} さん</p>
+
+    <p>こんにちは {{ request.user.last_name }} {{ request.user.first_name }}さん</p>
+
+
+    <main class="container">
+        <form method="POST">
+            {% csrf_token %}
+            <p>監視したいサイトURLを入力</p>
+            <input type="url" placeholder="sample.com" name="url">
+            
+            <p>通知先メールアドレス</p>
+            <input type="email" placeholder="sample@gmail.com" name="email">
+            <input type="submit" value="登録">
+        </form>
+
+        {% for information in informations %}
+        <div class="border">
+            {{ information.url|urlize }}
+            {{ information.email }}
+            {# {{ information.user_id }} #}
+
+            <!--
+                urls.pyで決めたappnameとnameからurlの逆引きをする。スペース区切りで引数を指定
+            -->
+            <form action="{% url 'surveillance:delete' information.id %}" method="POST" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="submit" value="削除">
+            </form>
+        </div>
+        {% endfor %}
+
+    </main>
+
+</body>
+</html>
