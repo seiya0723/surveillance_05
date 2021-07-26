@@ -72,21 +72,29 @@ print(data)
 
 while True:
 
-    #TODO:指定したサイトへここでスクレイピングをする。(※注意、管理サイトにログインしたセッションでスクレイピングをすると、管理サイトの情報を一般ユーザーに知られてしまう可能性があるため、別セッションでスクレイピング)
+    #指定したサイトへここでスクレイピングをする。(※注意、管理サイトにログインしたセッションでスクレイピングをすると、管理サイトの情報を一般ユーザーに知られてしまう可能性があるため、別セッションでスクレイピング)
     for d in data:
         
         try:
-            result  = requests.get(d["url"],timeout=TIMEOUT,headers=HEADERS)
+            if d["url"] != "": 
+                result  = requests.get(d["url"],timeout=TIMEOUT,headers=HEADERS)
+            else:
+                print("削除済みデータ")
+                continue
         except:
             print("スクレイピングエラー")
             continue
         else:
-            pass
             print("スクレイピング開始")
 
             #現在のスクレイピング対象のHTMLもしくは文字列等をafterに代入。
             #print(result.content)
-            d["after"]  = result.content
+            
+            soup    = bs4.BeautifulSoup(result.content,"html.parser")
+            body    = soup.select("body")
+
+            d["after"]  = body[0].text
+            #d["after"]  = result.content
 
             #ここで前回のループで代入したbeforeと今回のループで代入したafterを比較。
             #比較に必要なbeforeとafterのいずれかが空欄になっている(比較できない状態)の場合は何もしない。
@@ -94,7 +102,6 @@ while True:
                 pass
             else:
                 #beforeとafterが不一致の場合、メール送信。
-                #FIXME:csrfトークン等のアクセスするたびに不定の要素がある場合、必ずここを通ってしまう。
                 if d["before"] != d["after"]:
                     #ここでメールを送信する
                     print("メール送信")
@@ -124,13 +131,28 @@ while True:
 
     #前のwhileループのIDとスクレイピングの結果手に入ったIDを比較するため、リスト型変数を生成
     #リストの内包表記
-    new_id_list     = [ id.text for id in ids ]
-    old_id_list     = [ d["id"] for d in data ]
+    new_id_list     = [ id.text for id in ids ] #←["1","32","4"]
+    old_id_list     = [ d["id"] for d in data ] #←["1","32","4","5"]
+
+    """
+    #↑の内包表記は↓と等価
+    new_id_list = []
+    for id in ids:
+        new_id_list.append(id.text)
+    """
+
+
 
     print("==============")
     print(new_id_list)
     print(old_id_list)
     print("==============")
+
+
+    """
+    [{},{},{}]
+    """
+
 
     #削除されたデータを消す。
     for o in old_id_list:
@@ -180,6 +202,7 @@ while True:
 
     print(data)
 
-    time.sleep(3)
+    #ここの待ち時間を30分以上に指定してしまうとHerokuがスリープしてしまう。
+    time.sleep(10)
 
 
